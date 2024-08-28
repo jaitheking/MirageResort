@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MirageResort.Domain\MirageResort.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
