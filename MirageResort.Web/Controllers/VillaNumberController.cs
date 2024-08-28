@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using MirageResort.Application.Common.Interfaces;
 using MirageResort.Domain.Entities;
 using MirageResort.Infrastructure.Data;
 using MirageResort.Web.ViewModels;
@@ -8,15 +9,15 @@ namespace MirageResort.Web.Controllers
 {
     public class VillaNumberController : Controller
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public VillaNumberController(ApplicationDbContext db)
+        public VillaNumberController(IUnitOfWork unitOfWork)
         {
-            _db = db;
+            _unitOfWork = unitOfWork;
         }
         public IActionResult Index()
         {
-            var villaNumbers = _db.VillaNumbers.Include(x=>x.Villa).ToList();
+            var villaNumbers = _unitOfWork.VillaNumber.GetAll(includeProperties:"Villa");
             return View(villaNumbers);
         }
 
@@ -24,7 +25,7 @@ namespace MirageResort.Web.Controllers
         {
             VillaNumberVM villaNumberVM = new()
             {
-                VillaList = _db.Villas.ToList().Select(x => new SelectListItem
+                VillaList = _unitOfWork.Villa.GetAll().Select(x => new SelectListItem
                 {
                     Text = x.Name,
                     Value = x.Id.ToString()
@@ -38,11 +39,11 @@ namespace MirageResort.Web.Controllers
         {
             //ModelState.Remove("Villa");
 
-            bool roomNumberExists = _db.VillaNumbers.Any(x=>x.Villa_Number==obj.VillaNumber.Villa_Number);
+            bool roomNumberExists = _unitOfWork.VillaNumber.Any(x=>x.Villa_Number==obj.VillaNumber.Villa_Number);
             if (ModelState.IsValid && !roomNumberExists)
             {
-                _db.VillaNumbers.Add(obj.VillaNumber);
-                _db.SaveChanges();
+                _unitOfWork.VillaNumber.Add(obj.VillaNumber);
+                _unitOfWork.Save();
                 TempData["success"] = "The villa number has been created successfully.";
                 return RedirectToAction(nameof(Index));
             }
@@ -50,7 +51,7 @@ namespace MirageResort.Web.Controllers
             {
                 TempData["error"] = "The villa number already exists.";
             }
-            obj.VillaList = _db.Villas.ToList().Select(x => new SelectListItem
+            obj.VillaList = _unitOfWork.Villa.GetAll().Select(x => new SelectListItem
             {
                 Text = x.Name,
                 Value = x.Id.ToString()
@@ -62,12 +63,12 @@ namespace MirageResort.Web.Controllers
         {
             VillaNumberVM villaNumberVM = new()
             {
-                VillaList = _db.Villas.ToList().Select(x => new SelectListItem
+                VillaList = _unitOfWork.Villa.GetAll().Select(x => new SelectListItem
                 {
                     Text = x.Name,
                     Value = x.Id.ToString()
                 }),
-                VillaNumber = _db.VillaNumbers.FirstOrDefault(x => x.Villa_Number == villaNumberId)
+                VillaNumber = _unitOfWork.VillaNumber.Get(x => x.Villa_Number == villaNumberId)
             };
             if (villaNumberVM.VillaNumber is null)
             {
@@ -81,12 +82,12 @@ namespace MirageResort.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                _db.VillaNumbers.Update(villaNumberVM.VillaNumber);
-                _db.SaveChanges();
+                _unitOfWork.VillaNumber.Update(villaNumberVM.VillaNumber);
+                _unitOfWork.Save();
                 TempData["success"] = "The villa number has been updated successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            villaNumberVM.VillaList = _db.Villas.ToList().Select(x => new SelectListItem
+            villaNumberVM.VillaList = _unitOfWork.Villa.GetAll().Select(x => new SelectListItem
             {
                 Text = x.Name,
                 Value = x.Id.ToString()
@@ -98,12 +99,12 @@ namespace MirageResort.Web.Controllers
         {
             VillaNumberVM villaNumberVM = new()
             {
-                VillaList = _db.Villas.ToList().Select(x => new SelectListItem
+                VillaList = _unitOfWork.Villa.GetAll().Select(x => new SelectListItem
                 {
                     Text = x.Name,
                     Value = x.Id.ToString()
                 }),
-                VillaNumber = _db.VillaNumbers.FirstOrDefault(x => x.Villa_Number == villaNumberId)
+                VillaNumber = _unitOfWork.VillaNumber.Get(x => x.Villa_Number == villaNumberId)
             };
             if (villaNumberVM.VillaNumber is null)
             {
@@ -115,11 +116,11 @@ namespace MirageResort.Web.Controllers
         [HttpPost]
         public IActionResult Delete(VillaNumberVM villaNumberVM)
         {
-            VillaNumber? objFromDb = _db.VillaNumbers.FirstOrDefault(x => x.Villa_Number == villaNumberVM.VillaNumber.Villa_Number);
+            VillaNumber? objFromDb = _unitOfWork.VillaNumber.Get(x => x.Villa_Number == villaNumberVM.VillaNumber.Villa_Number);
             if (objFromDb is not null)
             {
-                _db.VillaNumbers.Remove(objFromDb);
-                _db.SaveChanges();
+                _unitOfWork.VillaNumber.Remove(objFromDb);
+                _unitOfWork.Save();
                 TempData["success"] = "The villa number has been deleted successfully.";
                 return RedirectToAction(nameof(Index));
             }

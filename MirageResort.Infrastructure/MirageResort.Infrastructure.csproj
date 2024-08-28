@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MirageResort.Domain\MirageResort.Domain.csproj" />
+    <ProjectReference Include="..\MirageResort.Application\MirageResort.Application.csproj" />
   </ItemGroup>
 
 </Project>
